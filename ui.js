@@ -1,6 +1,4 @@
 (() => {
-  const isMac = /Mac|iPhone|iPad|iPod/.test(navigator.platform);
-
   const el = (t, s = {}, a = {}) => {
     const e = document.createElement(t);
     Object.assign(e.style, s);
@@ -10,46 +8,60 @@
 
   const append = (p, ...c) => (c.forEach(x => p.appendChild(x)), p);
 
-  const logBox = { el: null };
-  const log = (t) => {
-    if (!logBox.el) return;
-    const d = el("div", {
-      fontSize: "11px",
-      padding: "2px",
-      borderBottom: "1px solid #333",
-      color: "#b5bac1"
-    }, { innerText: t });
-
-    logBox.el.appendChild(d);
-    logBox.el.scrollTop = logBox.el.scrollHeight;
-  };
+  const isMac = /Mac|iPhone|iPad|iPod/.test(navigator.platform);
 
   const UI = (() => {
+
     const C = {
       bg: "#2b2d31",
-      dark: "#1e1f22",
-      side: "#232428",
-      btn: "#3a3c43",
+      bgDark: "#1e1f22",
+      bgSidebar: "#232428",
+      bgButton: "#3a3c43",
+      bgClose: "#da373c",
       text: "#b5bac1",
-      white: "#ffffff"
+      textBright: "#ffffff",
+      success: "#248046",
+      warn: "#e67e22"
     };
 
+    const S = {
+      w: "650px",
+      h: "380px",
+      title: "30px",
+      side: "130px"
+    };
+
+    let debug = null;
+
+    function log(msg) {
+      if (!debug) return;
+      const line = el("div", {
+        fontSize: "10px",
+        padding: "2px 4px",
+        borderBottom: "1px solid #222",
+        color: C.text
+      }, { innerText: String(msg) });
+
+      debug.appendChild(line);
+      debug.scrollTop = debug.scrollHeight;
+    }
+
     function drag(handle, target) {
-      let d = 0, x = 0, y = 0;
+      let d = false, ox = 0, oy = 0;
 
-      handle.onmousedown = (e) => {
-        d = 1;
-        x = e.clientX - target.offsetLeft;
-        y = e.clientY - target.offsetTop;
+      handle.onmousedown = e => {
+        d = true;
+        ox = e.clientX - target.offsetLeft;
+        oy = e.clientY - target.offsetTop;
       };
 
-      document.onmousemove = (e) => {
+      document.onmousemove = e => {
         if (!d) return;
-        target.style.left = (e.clientX - x) + "px";
-        target.style.top = (e.clientY - y) + "px";
+        target.style.left = (e.clientX - ox) + "px";
+        target.style.top = (e.clientY - oy) + "px";
       };
 
-      document.onmouseup = () => d = 0;
+      document.onmouseup = () => d = false;
     }
 
     function createWindow(title) {
@@ -57,34 +69,23 @@
         position: "fixed",
         top: "80px",
         left: "80px",
-        width: "650px",
-        height: "420px",
+        width: S.w,
+        height: S.h,
         background: C.bg,
-        zIndex: 999999,
         borderRadius: "8px",
         overflow: "hidden",
+        zIndex: 999999,
         fontFamily: "Arial"
       });
 
-      const top = el("div", {
-        height: "30px",
-        background: C.dark,
-        display: "flex",
-        justifyContent: "space-between",
-        alignItems: "center",
-        padding: "0 10px",
-        cursor: "move",
-        color: C.white
-      }, { innerText: title });
-
       const body = el("div", {
         display: "flex",
-        height: "calc(100% - 30px)"
+        height: `calc(100% - ${S.title})`
       });
 
-      const side = el("div", {
-        width: "130px",
-        background: C.side,
+      const sidebar = el("div", {
+        width: S.side,
+        background: C.bgSidebar,
         padding: "10px",
         display: "flex",
         flexDirection: "column",
@@ -94,61 +95,94 @@
       const content = el("div", {
         flex: 1,
         padding: "10px",
-        color: C.white,
+        color: C.textBright,
         overflow: "auto"
       });
 
-      const debug = el("div", {
+      const titlebar = el("div", {
+        height: S.title,
+        background: C.bgDark,
+        display: "flex",
+        justifyContent: "space-between",
+        alignItems: "center",
+        padding: "0 10px",
+        cursor: "move",
+        color: C.text
+      }, { innerText: title });
+
+      debug = el("div", {
         position: "fixed",
         bottom: "0",
         left: "0",
-        right: "0",
-        height: "140px",
+        width: "420px",
+        height: "110px",
         background: "#111",
         overflow: "auto",
-        fontSize: "11px",
-        color: "#b5bac1",
-        zIndex: 999999
+        fontSize: "10px",
+        zIndex: 999998
       });
 
-      logBox.el = debug;
+      const btn = (t, bg, fn) =>
+        el("button", {
+          width: "20px",
+          height: "20px",
+          border: "none",
+          borderRadius: "4px",
+          background: bg,
+          color: C.textBright,
+          cursor: "pointer"
+        }, { innerText: t, onclick: fn });
 
-      append(body, side, content);
-      append(root, top, body);
+      const min = btn("-", C.bgButton, () => {
+        const h = body.style.display === "none";
+        body.style.display = h ? "flex" : "none";
+        root.style.height = h ? S.h : S.title;
+      });
+
+      const close = btn("x", C.bgClose, () => root.remove());
+
+      const group = el("div", { display: "flex", gap: "5px" });
+
+      append(group, min, close);
+      append(titlebar, group);
+
+      append(body, sidebar, content);
+      append(root, titlebar, body);
+
       document.body.appendChild(root);
       document.body.appendChild(debug);
 
-      drag(top, root);
+      drag(titlebar, root);
 
-      return { root, side, content };
+      return { root, sidebar, content, log };
     }
 
-    function button(parent, text, fn) {
+    function button(p, t, fn, bg = C.bgButton) {
       const b = el("button", {
         width: "100%",
         padding: "6px",
-        background: C.btn,
-        color: C.white,
+        background: bg,
         border: "none",
         borderRadius: "4px",
+        color: C.textBright,
         cursor: "pointer",
         textAlign: "left"
-      }, { innerText: text, onclick: fn });
+      }, { innerText: t, onclick: fn });
 
-      parent.appendChild(b);
+      p.appendChild(b);
       return b;
     }
 
-    function toggle(parent, text, fn) {
+    function toggle(p, t, fn) {
       let v = false;
-      button(parent, text, () => {
+      button(p, t, () => {
         v = !v;
-        log(text + " " + v);
+        log(t + ": " + v);
         fn(v);
       });
     }
 
-    function slider(parent, text, min, max, fn) {
+    function slider(p, t, min, max, fn) {
       const i = el("input", { width: "100%" }, {
         type: "range",
         min,
@@ -157,32 +191,56 @@
       });
 
       i.oninput = () => {
-        log(text + " " + i.value);
+        log(t + ": " + i.value);
         fn(i.value);
       };
 
-      parent.appendChild(i);
+      p.appendChild(i);
     }
 
-    function color(parent, text, fn) {
+    function color(p, t, fn) {
       const i = el("input", { width: "100%" }, { type: "color" });
 
       i.oninput = () => {
-        log(text + " " + i.value);
+        log(t + ": " + i.value);
         fn(i.value);
       };
 
-      parent.appendChild(i);
+      p.appendChild(i);
     }
 
-    function label(parent, text) {
+    function label(p, t) {
       const d = el("div", {
-        fontSize: "11px",
-        color: "#888",
+        fontSize: "10px",
+        color: "#777",
         margin: "6px 0"
+      }, { innerText: t });
+
+      p.appendChild(d);
+    }
+
+    function setContent(c, text) {
+      c.innerText = text;
+    }
+
+    function message(c, text, colorType = "info") {
+      const map = {
+        info: C.bgButton,
+        success: C.success,
+        warn: C.warn
+      };
+
+      const box = el("div", {
+        padding: "8px",
+        marginTop: "6px",
+        borderRadius: "6px",
+        background: map[colorType] || C.bgButton,
+        color: C.textBright,
+        fontSize: "12px"
       }, { innerText: text });
 
-      parent.appendChild(d);
+      c.appendChild(box);
+      return box;
     }
 
     return {
@@ -192,8 +250,11 @@
       slider,
       color,
       label,
+      setContent,
+      message,
       log
     };
+
   })();
 
   window.UI = UI;
