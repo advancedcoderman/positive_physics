@@ -1,34 +1,43 @@
 const win = UI.createWindow("Positive Physics");
 
-UI.label(win.sidebar, "Tabs");
+// HOME TAB
+win.addTab("Home", (p) => {
+  UI.label(p, "Welcome");
 
-UI.button(win.sidebar, "Tab 1", () => {
-  UI.setContent(win.content, "");
-  UI.message(win.content, "Tab 1 opened", "info");
+  UI.message(p, "UI system loaded successfully");
+
+  UI.button(p, "Test Button", () => {
+    UI.message(p, "Button clicked");
+  });
+
+  UI.toggle(p, "Example Toggle", (v) => {
+    console.log("Toggle:", v);
+    UI.message(p, "Toggle state: " + v);
+  });
 });
 
-UI.button(win.sidebar, "Tab 2", () => {
-  UI.setContent(win.content, "");
-  UI.message(win.content, "Tab 2 opened", "success");
+// TOOLS TAB
+win.addTab("Tools", (p) => {
+  UI.label(p, "Controls");
+
+  UI.slider(p, "Speed", 0, 100, (v) => {
+    console.log("Speed:", v);
+    UI.message(p, "Speed set to " + v);
+  });
+
+  UI.color(p, "Color Picker", (v) => {
+    console.log("Color:", v);
+    UI.message(p, "Color: " + v);
+  });
+
+  UI.button(p, "Clear Screen", () => {
+    UI.message(p, "Cleared");
+  });
 });
 
-UI.label(win.sidebar, "Tools");
+// SETTINGS TAB
+win.addTab("Settings", (p) => {
+  UI.label(p, "System");
 
-UI.button(win.sidebar, "Clear", () => {
-  UI.setContent(win.content, "");
-}, "#da373c");
-
-UI.toggle(win.sidebar, "Toggle Debug Feature", v => {
-  UI.log("Toggle: " + v);
+  UI.toggle(p, "Mac Mode Detected: " + window.isMac, () => {});
 });
-
-UI.slider(win.sidebar, "Speed", 0, 100, v => {
-  UI.log("Speed: " + v);
-});
-
-UI.color(win.sidebar, "Color", v => {
-  UI.log("Color: " + v);
-});
-
-UI.message(win.content, "UI loaded successfully", "info");
-UI.message(win.content, "Press buttons on the left", "info");
