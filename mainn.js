@@ -144,6 +144,10 @@
         if (Object.keys(tabs).length === 1) switchTab(name);
       }
 
+      // ─────────────────────────────
+      // FULL COMPATIBILITY FIX HERE
+      // ─────────────────────────────
+
       function button(p, t, fn) {
         const b = el("button", {
           width: "100%",
@@ -188,6 +192,8 @@
         p.appendChild(i);
       }
 
+      // IMPORTANT FIX: missing functions that caused crash
+
       function label(p, t) {
         const d = el("div", {
           fontSize: "10px",
@@ -228,6 +234,10 @@
     return { createWindow };
 
   })();
+
+  window.UI = UI;
+  window.isMac = isMac;
+})();
 
   // ─── APP ─────────────────────────────────────────────
 
