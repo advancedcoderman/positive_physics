@@ -1,0 +1,123 @@
+javascript:(function() {
+  // Load Materialize CSS
+  const css = document.createElement('link');
+  css.rel = 'stylesheet';
+  css.href = 'https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css';
+  document.head.appendChild(css);
+
+  // Load Materialize JS
+  const script = document.createElement('script');
+  script.src = 'https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js';
+  script.onload = initScript;
+  document.head.appendChild(script);
+  
+  
+  // Intialize the Script after materialize is loaded
+  function initScript() {
+    let autoSolveEnabled = false; // Flag to track auto-solve state & also prevent it from being toggled on while the script firsts starts
+    let autosolveWait = 3000
+    let solvewaitTime = 2500
+
+
+    // Predefined strings to send
+    const MESSAGES = {
+      author: "Positive Physics {Press R} for instructions",
+      solved: "Solved",
+      next: "Next Problem",
+      dashboard: "Returning to dashboard",
+      instructions:
+        "Q: Solve current question\n" +
+        "W: Next question\n" +
+        "E: Return to dashboard\n" +
+        "O: Count total problems\n" +
+        "R: Show instructions\n" +
+        "T: Toggle auto-solve"
+    };
+
+    
+    // Send intial author toast (notification)
+    M.toast({ html: MESSAGES.author, displayLength: 4000 });
+
+    // wait function (in milliseconds)
+    const sleep = (ms) => new Promise(res => setTimeout(res, ms));
+
+
+    // Function to go to the next question
+    function nextQuestion() {
+      M.toast({ html: MESSAGES.next, displayLength: 1000 });
+      document.querySelector('#nextProblemButton')?.click();
+    }
+
+
+    // Function to go back to the dashboard
+    function goToDashboard() {
+      M.toast({ html: MESSAGES.dashboard, displayLength: 1000 });
+      document.querySelector('#dashboardButton')?.click();
+    }
+
+
+    // Function to show instructions
+    function showInstructions() {
+      alert(MESSAGES.instructions);
+    }
+    
+
+    // Functio to alert the user to the total amount of problems on the page
+    function countProblems() {
+      const problems = document.querySelectorAll('[name="barProblem"]');
+      alert(`Total problems on this page: ${problems.length}`);
+    }
+
+
+    // Auto solve the problem
+    async function solveQuestion() {
+      const answerInputs = document.querySelectorAll('[name="answer"]');
+
+      answerInputs.forEach((input, index) => {
+        input.value = answerValues[index];
+      });
+
+      M.toast({ html: MESSAGES.solved, displayLength: 1000 });
+      document.querySelector('#checkAnswersButton')?.click();
+
+      await sleep(solvewaitTime); // Wait for the specified time to prevent issues submitting
+      nextQuestion();
+    }
+
+    // Loop to auto-solve questions then wait 
+    async function autoSolveLoop() {
+      while (autoSolveEnabled) {
+        await solveQuestion();
+        await sleep(autosolveWait); // amount of time inbetween answering the questions
+      }
+    }
+
+
+    // Function to toggle auto-solver on and off
+    function toggleAutoSolve() {
+      autoSolveEnabled = !autoSolveEnabled;
+      const state = autoSolveEnabled ? 'On' : 'Off';
+
+      alert(`AutoSolve: ${state}`);
+      M.toast({ html: `Auto-solve: ${state}`, displayLength: 1500 });
+
+      if (autoSolveEnabled) {
+        autoSolveLoop();
+      }
+    }
+    
+
+    // Keycode handler
+    document.body.addEventListener('keypress', (event) => {
+      switch (event.key.toLowerCase()) {
+        case 'q': solveQuestion(); break;
+        case 'w': nextQuestion(); break;
+        case 'e': goToDashboard(); break;
+        case 'o': countProblems(); break;
+        case 'r': showInstructions(); break;
+        case 't': toggleAutoSolve(); break;
+        default: console.log("Key not mapped:", event.key);
+      }
+    });
+  }
+})();
